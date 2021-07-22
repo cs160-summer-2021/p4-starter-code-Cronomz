@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>BlockScraper</title>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/bootstrap/css/bootstrap.min.css' %}">
+    <script type="text/javascript" src="{% static 'draw/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
+    <style type="text/css">
+    </style>
+
+</head>
+<body>
+    <!-- You may change the dimensions of this canvas -->
+    <div class="background" style="background-image: linear-gradient(rgb(0, 119, 255), aqua) ; height: 700px; width: 1400px;">
+        <div class="buildings" style="position: absolute; top: 330px; left: -50px;">
+            <img src="{% static 'buildings.png' %}" height="400px" width="400px">
+        </div>
+        <div class="buildings" style="position: absolute; top: 330px; left: 1100px; transform: scaleX(-1);">
+            <img src="{% static 'buildings.png' %}" height="400px" width="400px">
+        </div>
+
+        <div class="clouds" style="position: absolute; top: 230px; left: 100px;">
+            <img src="{% static 'clouds.png' %}" height="100px" width="200px">
+        </div>
+        <div class="clouds" style="position: absolute; top: 130px; left: 1000px;">
+            <img src="{% static 'clouds.png' %}" height="100px" width="200px">
+        </div>
+
+        <div class="clouds" style="position: absolute; top: 100px; left: 450px;">
+            <img src="{% static 'clouds.png' %}" height="100px" width="200px">
+        </div>
+
+        <div class="character1" style="transition: all 0.3s linear; position: absolute; top: 500px; left: 400px; z-index: 998;">
+            <div>player 1</div>
+            <img src="{% static 'ufo.png' %}" height="50px" width="50px">
+        </div>
+        <div class="character2" style="transition: all 0.3s linear; position: absolute; top: 500px; left: 900px; z-index: 998;">
+            <div>player 2</div>
+            <img src="{% static 'ufo.png' %}" height="50px" width="50px">
+        </div>
+
+        <div class="d-pad" style="position: absolute; bottom: 25vh; left: 5vw; z-index: 999; display:flex;">
+            <img src="{% static 'd-pad.png' %}" height="150px" width="150px" style="filter: opacity(0.5)">
+            <button class="right-d-pad" role="button" onmousedown=moveRight(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; right: 0; top: 32%"></button>
+            <button class="left-d-pad" role="button" onmousedown=moveLeft(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; left: 0; top: 32%"></button>
+            <button class="up-d-pad" role="button" onmousedown=moveUp(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; left: 32%; top: 0"></button>
+            <button class="down-d-pad" role="button" onmousedown=moveDown(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; left: 32%; bottom: 0"></button>
+        </div>
+
+        <div class="directional" style="position: absolute; height: 100vh; width: 100vw; z-index: 999; display:flex;">
+            <button class="right-directional" role="button" onmousedown=moveRight(0) style="filter: opacity(0.2); height: 36%; width: 40%; position: absolute; right: 0; top: 32%"></button>
+            <button class="left-directional" role="button" onmousedown=moveLeft(0) style="filter: opacity(0.2); height: 36%; width: 40%; position: absolute; left: 0; top: 32%"></button>
+            <button class="up-directional" role="button" onmousedown=moveUp(0) style="filter: opacity(0.2); height: 32%; width: 100%; position: absolute; left: 0; top: 0"></button>
+            <button class="down-directional" role="button" onmousedown=moveDown(0) style="filter: opacity(0.2); height: 32%; width: 100%; position: absolute; left: 0; bottom: 0"></button>
+        </div>
+
+        <div class="ground" style="background-color: brown; height: 50px; width: 1400px; position: fixed; top: 650px;"></div>
+    </div>
+</body>
+<script>
+    var char1 = document.getElementsByClassName("character1")[0];
+    var char2 = document.getElementsByClassName("character2")[0];
+    var dpad = document.getElementsByClassName("d-pad")[0];
+    var url = window.location.href;
+    var screen = url.split("?")[1].split("&")[0].split("=")[1];
+    var dpad = url.split("?")[1].split("&")[1].split("=")[1];
+    
+    console.log(screen);
+    console.log(dpad);
+
+    var socket = new WebSocket(
+        'ws://' + window.location.host + '/ws/draw');
+
+    if (screen == "large") {
+        document.getElementsByClassName("d-pad")[0].style.display = "none";
+        document.getElementsByClassName("directional")[0].style.display = "none";
+    } else if (screen == "small") {
+        if (dpad == 0) {
+            document.getElementsByClassName("d-pad")[0].style.display = "none";
+            char1.style.display = "none";
+        } else if (dpad == 1) {
+            document.getElementsByClassName("directional")[0].style.display = "none";
+            char2.style.display = "none";
+        }
+
+    }
+
+    function moveRight(input) {
+        var x = 0;
+        if (input == 1) {
+            x = char1.getBoundingClientRect().left;
+        } else if (input == 0) {
+            x = char2.getBoundingClientRect().left;
+        }
+        
+        if (x <= 1200) {
+            if (input == 1) {
+                char1.style.setProperty('left', x + 60 + 'px');
+            } else if (input == 0) {
+                char2.style.setProperty('left', x + 60 + 'px');
+            }
+        }
+        if (screen == "small") {
+            socket.send("{\"move\" : " + "\"right\"" + 
+                        ", \"input\" : " + input +
+                        "}")
+        }
+    }
+
+    function moveLeft(input) {
+        var x = 0;
+        if (input == 1) {
+            x = char1.getBoundingClientRect().left;
+        } else if (input == 0) {
+            x = char2.getBoundingClientRect().left;
+        }
+        if (x >= 100) {
+            if (input == 1) {
+                char1.style.setProperty('left', x - 60 + 'px');
+            } else if (input == 0) {
+                char2.style.setProperty('left', x - 60 + 'px');
+            }
+        }
+        if (screen == "small") {
+            socket.send("{\"move\" : " + "\"left\"" + 
+                        ", \"input\" : " + input +
+                        "}")
+        }
+    }
+
+    function moveUp(input) {
+        if (input == 1) {
+            y = char1.getBoundingClientRect().top;
+        } else if (input == 0) {
+            y = char2.getBoundingClientRect().top;
+        }
+        if (y >= 100) {
+            if (input == 1) {
+                char1.style.setProperty('top', y - 60 + 'px');
+            } else if (input == 0) {
+                char2.style.setProperty('top', y - 60 + 'px');
+            }
+        }
+        if (screen == "small") {
+            socket.send("{\"move\" : " + "\"up\"" + 
+                        ", \"input\" : " + input +
+                        "}")
+        }
+    }
+
+    function moveDown(input) {
+        if (input == 1) {
+            y = char1.getBoundingClientRect().top;
+        } else if (input == 0) {
+            y = char2.getBoundingClientRect().top;
+        }
+        if (y <= 550) {
+            if (input == 1) {
+                char1.style.setProperty('top', y + 60 + 'px');
+            } else if (input == 0) {
+                char2.style.setProperty('top', y + 60 + 'px');
+            }
+        }
+        if (screen == "small") {
+            socket.send("{\"move\" : " + "\"down\"" + 
+                        ", \"input\" : " + input +
+                        "}")
+        }
+    }
+
+    socket.onmessage = function(receivedMessage) {
+        if (screen == "large") {
+            var received = JSON.parse(receivedMessage.data);
+            console.log("Received: " + JSON.stringify(received));
+            
+            if (received.move == "right") {
+                moveRight(received.input);
+            } else if (received.move == "left") {
+                moveLeft(received.input);
+            } else if (received.move == "up") {
+                moveUp(received.input);
+            } else if (received.move == "down") {
+                moveDown(received.input);
+            }
+        }
+    }
+</script>
+</html>
