@@ -26,24 +26,58 @@
     var tool = new paper.Tool();
     var path = new paper.Path();
     var uid = Date.now() % 10000;
-    path.strokeColor = "red";
+    var color = "#" + ((1<<24)*Math.random() | 0).toString(16);
+    path.strokeColor = color;
 
+    var paths = {};
+    
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
+    var screen = url.split("?")[1].split("=")[1];
 
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
+    
+    function checkPath(uid) {
+        var exist = false;
+        for (var key in paths) {
+            if (key == uid)  {
+                exist = true;
+            }
+        }
+        return exist
+    }
+
+    function newPath(uid, color) {
+        var nPath = new paper.Path();
+        nPath.strokeColor = color;
+        paths[uid] = nPath;
+    }
 
     tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
-       path.add(event.point);
-       // You may need to add code here if you want to pass any other information.
-       socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + "}" );
+        if (screen == "small") {
+            path.add(event.point);
+            // You may need to add code here if you want to pass any other information.
+            socket.send("{\"x\" : " + event.point.x + 
+                        ", \"y\" : " + event.point.y + 
+                        ", \"uid\" : " + uid + 
+                        ", \"color\" : " + "\"" + color + "\"" +
+                        ", \"screen\" : " + "\"" + screen + "\"" + 
+                        "}" );
+        }   
     }
 
     socket.onmessage = function(receivedMessage) {
         var received = JSON.parse(receivedMessage.data);
         console.log("Received: " + JSON.stringify(received));
         // You will probably want to add some code here to draw more lines.
+        if (received.uid != uid && screen == "large" && received.screen == "small") {
+            if (!checkPath(received.uid)) {
+                newPath(received.uid, received.color);
+            }
+            paths[received.uid].strokeColor = received.color;
+            paths[received.uid].add(received.x, received.y);
+        }
     }
 
     socket.onclose = function(e) {
