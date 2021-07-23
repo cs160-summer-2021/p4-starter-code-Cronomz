@@ -32,16 +32,16 @@
             <img src="{% static 'clouds.png' %}" height="100px" width="200px">
         </div>
 
-        <div class="character1" style="transition: all 0.3s linear; position: absolute; top: 500px; left: 400px; z-index: 998;">
+        <div class="character1" style="transition: all 0.1s linear; position: absolute; top: 500px; left: 400px; z-index: 998;">
             <div>player 1</div>
             <img src="{% static 'ufo.png' %}" height="50px" width="50px">
         </div>
-        <div class="character2" style="transition: all 0.3s linear; position: absolute; top: 500px; left: 900px; z-index: 998;">
+        <div class="character2" style="transition: all 0.1s linear; position: absolute; top: 500px; left: 900px; z-index: 998;">
             <div>player 2</div>
             <img src="{% static 'ufo.png' %}" height="50px" width="50px">
         </div>
 
-        <div class="d-pad" style="position: absolute; bottom: 25vh; left: 5vw; z-index: 999; display:flex;">
+        <div class="d-pad" style="position: fixed; bottom: 25vh; left: 5vw; z-index: 999; display:flex;">
             <img src="{% static 'd-pad.png' %}" height="150px" width="150px" style="filter: opacity(0.5)">
             <button class="right-d-pad" role="button" onmousedown=moveRight(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; right: 0; top: 32%"></button>
             <button class="left-d-pad" role="button" onmousedown=moveLeft(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; left: 0; top: 32%"></button>
@@ -49,14 +49,14 @@
             <button class="down-d-pad" role="button" onmousedown=moveDown(1) style="filter: opacity(0); height: 55px; width: 55px; position: absolute; left: 32%; bottom: 0"></button>
         </div>
 
-        <div class="directional" style="position: absolute; height: 100vh; width: 100vw; z-index: 999; display:flex;">
+        <div class="directional" style="position: fixed; height: 100vh; width: 100vw; z-index: 999; display:flex;">
             <button class="right-directional" role="button" onmousedown=moveRight(0) style="filter: opacity(0.2); height: 36%; width: 40%; position: absolute; right: 0; top: 32%"></button>
             <button class="left-directional" role="button" onmousedown=moveLeft(0) style="filter: opacity(0.2); height: 36%; width: 40%; position: absolute; left: 0; top: 32%"></button>
             <button class="up-directional" role="button" onmousedown=moveUp(0) style="filter: opacity(0.2); height: 32%; width: 100%; position: absolute; left: 0; top: 0"></button>
             <button class="down-directional" role="button" onmousedown=moveDown(0) style="filter: opacity(0.2); height: 32%; width: 100%; position: absolute; left: 0; bottom: 0"></button>
         </div>
 
-        <div class="ground" style="background-color: brown; height: 50px; width: 1400px; position: fixed; top: 650px;"></div>
+        <div class="ground" style="background-color: brown; height: 50px; width: 1400px; position: absolute; top: 650px;"></div>
     </div>
 </body>
 <script>
@@ -80,19 +80,21 @@
         if (dpad == 0) {
             document.getElementsByClassName("d-pad")[0].style.display = "none";
             char1.style.display = "none";
+            window.scrollTo(char2.offsetLeft, char2.offsetTop);
         } else if (dpad == 1) {
             document.getElementsByClassName("directional")[0].style.display = "none";
             char2.style.display = "none";
+            window.scrollTo(char1.offsetLeft, char1.offsetTop);
         }
-
+        setInterval(moveWindow, 50);
     }
 
     function moveRight(input) {
         var x = 0;
         if (input == 1) {
-            x = char1.getBoundingClientRect().left;
+            x = char1.offsetLeft;
         } else if (input == 0) {
-            x = char2.getBoundingClientRect().left;
+            x = char2.offsetLeft;
         }
         
         if (x <= 1200) {
@@ -100,6 +102,9 @@
                 char1.style.setProperty('left', x + 60 + 'px');
             } else if (input == 0) {
                 char2.style.setProperty('left', x + 60 + 'px');
+            }
+            if (screen == 'small') {
+                window.scrollBy(60, 0);
             }
         }
         if (screen == "small") {
@@ -112,15 +117,18 @@
     function moveLeft(input) {
         var x = 0;
         if (input == 1) {
-            x = char1.getBoundingClientRect().left;
+            x = char1.offsetLeft;
         } else if (input == 0) {
-            x = char2.getBoundingClientRect().left;
+            x = char2.offsetLeft;
         }
         if (x >= 100) {
             if (input == 1) {
                 char1.style.setProperty('left', x - 60 + 'px');
             } else if (input == 0) {
                 char2.style.setProperty('left', x - 60 + 'px');
+            }
+            if (screen == 'small') {
+                window.scrollBy(-60, 0);
             }
         }
         if (screen == "small") {
@@ -132,9 +140,9 @@
 
     function moveUp(input) {
         if (input == 1) {
-            y = char1.getBoundingClientRect().top;
+            y = char1.offsetTop;
         } else if (input == 0) {
-            y = char2.getBoundingClientRect().top;
+            y = char2.offsetTop;
         }
         if (y >= 100) {
             if (input == 1) {
@@ -142,6 +150,9 @@
             } else if (input == 0) {
                 char2.style.setProperty('top', y - 60 + 'px');
             }
+            if (screen == 'small') {
+                    window.scrollBy(0, -60);
+                }
         }
         if (screen == "small") {
             socket.send("{\"move\" : " + "\"up\"" + 
@@ -152,9 +163,9 @@
 
     function moveDown(input) {
         if (input == 1) {
-            y = char1.getBoundingClientRect().top;
+            y = char1.offsetTop;
         } else if (input == 0) {
-            y = char2.getBoundingClientRect().top;
+            y = char2.offsetTop;
         }
         if (y <= 550) {
             if (input == 1) {
@@ -162,6 +173,9 @@
             } else if (input == 0) {
                 char2.style.setProperty('top', y + 60 + 'px');
             }
+            if (screen == 'small') {
+                    window.scrollBy(0, 60);
+                }
         }
         if (screen == "small") {
             socket.send("{\"move\" : " + "\"down\"" + 
@@ -186,5 +200,23 @@
             }
         }
     }
+
+    function moveWindow() {
+        if (dpad == 1) {
+            window.scrollTo(char1.offsetLeft - 200, char1.offsetTop - 150);
+
+        } else if (dpad == 0) {
+            window.scrollTo(char2.offsetLeft, char2.offsetTop);
+        }
+    }
+
+    function zoomIn()
+    {
+        var Page = document.getElementById('Body');
+        var zoom = parseInt(Page.style.zoom) + 10 +'%'
+        Page.style.zoom = zoom;
+        return false;
+    }
+ 
 </script>
 </html>
